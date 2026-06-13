@@ -57,9 +57,7 @@ def criar_banco():
 criar_banco()
 
 def criar_admin():
-
     conn = sqlite3.connect(BANCO)
-
     cursor = conn.cursor()
 
     cursor.execute(
@@ -71,15 +69,15 @@ def criar_admin():
 
     if not existe:
 
+        senha_hash = generate_password_hash("123456")
+
         cursor.execute("""
-        INSERT INTO usuarios
-        (nome, usuario, senha)
-        VALUES (?, ?, ?)
-        """,
-        (
+            INSERT INTO usuarios (nome, usuario, senha)
+            VALUES (?, ?, ?)
+        """, (
             "Administrador",
             "admin",
-            "123456"
+            senha_hash
         ))
 
         conn.commit()
