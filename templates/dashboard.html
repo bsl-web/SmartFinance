@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Dashboard Financeiro</title>
+
+<link
+rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="topbar">
+
+    <h2>💰 Financeiro</h2>
+
+    <a href="/logout" class="btn-sair">
+        Sair
+    </a>
+
+</div>
+
+<div class="container">
+
+    <h1>Dashboard</h1>
+
+    <div class="cards">
+
+        <div class="card salario">
+
+            <h3>Salário</h3>
+
+            <p>R$ {{ "%.2f"|format(salario) }}</p>
+
+        </div>
+
+        <div class="card gastos">
+
+            <h3>Gastos</h3>
+
+            <p>R$ {{ "%.2f"|format(total_gastos) }}</p>
+
+        </div>
+
+        <div class="card {% if saldo >= 0 %}saldo{% else %}gastos{% endif %}">
+
+            <h3>Saldo</h3>
+
+            <p>R$ {{ "%.2f"|format(saldo) }}</p>
+
+        </div>
+
+        <div class="card previsao">
+
+            <h3>Previsão</h3>
+
+            <p>R$ {{ "%.2f"|format(previsao) }}</p>
+
+        </div>
+
+        <div class="card reserva">
+
+            <h3>Reserva</h3>
+
+            <p>R$ {{ "%.2f"|format(valor_guardado) }}</p>
+
+        </div>
+
+    </div>
+
+    <div class="area-formularios">
+
+        <div class="box">
+
+            <h2>Atualizar Salário</h2>
+
+            <form action="/salvar_salario" method="POST">
+
+                <input
+                type="number"
+                step="0.01"
+                name="salario"
+                required>
+
+                <button>
+                    Salvar
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="box">
+
+            <h2>Novo Gasto</h2>
+
+            <form action="/novo_gasto" method="POST">
+
+                <input
+                type="date"
+                name="data"
+                required>
+
+                <select
+                name="categoria">
+
+                    <option>Cartao</option>
+                    <option>Pix</option>
+                    <option>Dinheiro</option>
+
+                </select>
+
+                <input
+                type="number"
+                step="0.01"
+                name="valor"
+                placeholder="Valor"
+                required>
+
+                <button>
+                    Adicionar
+                </button>
+
+            </form>
+
+        </div>
+
+        <div class="box">
+
+            <h2>Meta de Reserva</h2>
+
+            <form action="/salvar_meta" method="POST">
+
+                <input
+                type="number"
+                step="0.01"
+                name="meta"
+                placeholder="Meta"
+                required>
+
+                <input
+                type="number"
+                step="0.01"
+                name="guardado"
+                placeholder="Valor Guardado"
+                required>
+
+                <button>
+                    Salvar Meta
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="graficos">
+
+        <div class="grafico-box">
+
+            <h2>Gastos por Categoria</h2>
+
+            <canvas id="graficoCategorias"></canvas>
+
+        </div>
+
+        <div class="grafico-box">
+
+            <h2>Evolução Mensal</h2>
+
+            <canvas id="graficoMensal"></canvas>
+
+        </div>
+
+    </div>
+
+    <div class="historico">
+
+        <h2>Histórico de Gastos</h2>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Data</th>
+                    <th>Categoria</th>
+                    <th>Valor</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for item in transacoes %}
+
+                <tr>  
+                    <td>{{ item["data"] }}</td>
+                    <td>{{ item["categoria"] }}</td>
+                    <td>R$ {{ "%.2f"|format(item["valor"]) }}</td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="links">
+        <a href="/contas_fixas">
+            Contas Fixas
+        </a>
+
+        <a href="/previsao">
+            Ver Previsão
+        </a>
+
+        <a href="/relatorio">
+            Relatório Mensal
+        </a>
+
+        <a href="/metas">
+            Metas Financeiras
+        </a>
+
+    </div>
+
+</div>
+
+<script src="/dados_dashboard.js"></script>
+
+<script src="{{ url_for('static', filename='js/graficos.js') }}"></script>
+
+</body>
+
+</html>

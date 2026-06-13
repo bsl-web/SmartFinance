@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Relatório Mensal</title>
+
+<link
+rel="stylesheet"
+href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+
+<body>
+
+<div class="topbar">
+
+    <h2>💰 Financeiro</h2>
+
+    <a href="/dashboard" class="btn-sair">
+        Dashboard
+    </a>
+
+</div>
+
+<div class="container">
+
+    <h1>Relatório Mensal</h1>
+
+    <div class="cards">
+
+        <div class="card salario">
+
+            <h3>Salário</h3>
+
+            <p>
+                R$ {{ salario }}
+            </p>
+
+        </div>
+
+        <div class="card gastos">
+
+            <h3>Gastos Variáveis</h3>
+
+            <p>
+                R$ {{ gastos }}
+            </p>
+
+        </div>
+
+        <div class="card previsao">
+
+            <h3>Contas Fixas</h3>
+
+            <p>
+                R$ {{ contas }}
+            </p>
+
+        </div>
+
+        <div class="card saldo">
+
+            <h3>Saldo Final</h3>
+
+            <p>
+                R$ {{ saldo }}
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="historico">
+
+        <h2>Resumo do Mês</h2>
+
+        <table>
+
+            <tbody>
+
+                <tr>
+                    <th>Salário</th>
+                    <td>R$ {{ salario }}</td>
+                </tr>
+
+                <tr>
+                    <th>Gastos Variáveis</th>
+                    <td>R$ {{ gastos }}</td>
+                </tr>
+
+                <tr>
+                    <th>Contas Fixas</th>
+                    <td>R$ {{ contas }}</td>
+                </tr>
+
+                <tr>
+                    <th>Saldo Final</th>
+                    <td>R$ {{ saldo }}</td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="box">
+
+        <h2>Análise</h2>
+
+        {% if saldo > 0 %}
+
+            <p>
+                Você terminou o mês com saldo positivo.
+            </p>
+
+        {% else %}
+
+            <p>
+                Atenção: seus gastos ultrapassaram sua renda.
+            </p>
+
+        {% endif %}
+
+    </div>
+
+    <div class="links">
+
+        <a href="/dashboard">
+            Voltar ao Dashboard
+        </a>
+
+        <a href="/gerar_pdf">
+            Gerar PDF
+        </a>
+
+    </div>
+
+</div>
+
+</body>
+
+</html>

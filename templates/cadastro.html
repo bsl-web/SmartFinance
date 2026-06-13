@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cadastro de Usuário</title>
+<style>
+body{
+    font-family: Arial, sans-serif;
+    background:#f4f6f9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    margin:0;
+}
+.card{
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+    width:350px;
+}
+h1{
+    text-align:center;
+}
+input{
+    width:100%;
+    padding:10px;
+    margin:8px 0;
+    box-sizing:border-box;
+}
+button{
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+}
+a{
+    display:block;
+    text-align:center;
+    margin-top:15px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Cadastrar Usuário</h1>
+
+<form action="/cadastrar" method="POST">
+    <input type="text" name="nome" placeholder="Nome completo" required>
+    <input type="text" name="usuario" placeholder="Usuário" required>
+    <input type="password" name="senha" placeholder="Senha" required>
+
+    <button type="submit">Cadastrar</button>
+</form>
+
+<a href="/">Voltar para Login</a>
+</div>
+</body>
+</html>
