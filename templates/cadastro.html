@@ -1,62 +1,120 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastro de Usuário</title>
-<style>
-body{
-    font-family: Arial, sans-serif;
-    background:#f4f6f9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-    margin:0;
-}
-.card{
-    background:white;
-    padding:30px;
-    border-radius:12px;
-    box-shadow:0 4px 12px rgba(0,0,0,.15);
-    width:350px;
-}
-h1{
-    text-align:center;
-}
-input{
-    width:100%;
-    padding:10px;
-    margin:8px 0;
-    box-sizing:border-box;
-}
-button{
-    width:100%;
-    padding:12px;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-}
-a{
-    display:block;
-    text-align:center;
-    margin-top:15px;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastro - SmartFinance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-<div class="card">
-<h1>Cadastrar Usuário</h1>
+<body class="bg-light">
 
-<form action="/cadastrar" method="POST">
-    <input type="text" name="nome" placeholder="Nome completo" required>
-    <input type="text" name="usuario" placeholder="Usuário" required>
-    <input type="password" name="senha" placeholder="Senha" required>
+<div class="container">
 
-    <button type="submit">Cadastrar</button>
-</form>
+    <div class="row justify-content-center mt-5">
 
-<a href="/">Voltar para Login</a>
+        <div class="col-md-6">
+
+            <div class="card shadow">
+
+                <div class="card-header text-center">
+
+                    <h2>SmartFinance</h2>
+                    <p>Cadastro de Usuário</p>
+
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST">
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Nome Completo
+                            </label>
+
+                            <input
+                                type="text"
+                                name="nome"
+                                class="form-control"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Usuário
+                            </label>
+
+                            <input
+                                type="text"
+                                name="usuario"
+                                class="form-control"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                E-mail
+                            </label>
+
+                            <input
+                                type="email"
+                                name="email"
+                                class="form-control"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Senha
+                            </label>
+
+                            <input
+                                type="password"
+                                name="senha"
+                                class="form-control"
+                                required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                Confirmar Senha
+                            </label>
+
+                            <input
+                                type="password"
+                                name="confirmar"
+                                class="form-control"
+                                required>
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary w-100">
+
+                            Cadastrar
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+                <div class="card-footer text-center">
+
+                    <a href="/">
+                        Já possui conta? Entrar
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
+
 </body>
 </html>

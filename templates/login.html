@@ -1,74 +1,106 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Login - Financeiro</title>
-
-<link
-rel="stylesheet"
-href="{{ url_for('static', filename='css/style.css') }}">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - SmartFinance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body class="login-body">
+<body class="bg-light">
 
-<div class="login-container">
+    <div class="container">
 
-    <div class="login-card">
+        <div class="row justify-content-center mt-5">
 
-        <h1>💰 Financeiro</h1>
+            <div class="col-md-5">
 
-        <p>
-            Controle Financeiro Pessoal
-        </p>
+                <div class="card shadow">
 
-        <form
-        action="/entrar"
-        method="POST">
+                    <div class="card-header text-center">
 
-            <input
-            type="text"
-            name="usuario"
-            placeholder="Usuário"
-            required>
+                        <h2>SmartFinance</h2>
+                        <p>Sistema Financeiro Pessoal</p>
 
-            <input
-            type="password"
-            name="senha"
-            placeholder="Senha"
-            required>
+                    </div>
 
-            <button type="submit">
+                    <div class="card-body">
 
-                Entrar
+                        {% with messages = get_flashed_messages() %}
+                            {% if messages %}
+                                <div class="alert alert-warning">
+                                    {{ messages[0] }}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
 
-            </button>
+                        <form action="/entrar" method="POST">
 
-        </form>
+                            <div class="mb-3">
 
-        <div class="cadastro-info">
+                                <label class="form-label">
+                                    Usuário
+                                </label>
 
-            <p>
-                Não tem uma conta?
-            </p>
+                                <input
+                                    type="text"
+                                    name="usuario"
+                                    class="form-control"
+                                    required>
 
-            <a href="/cadastro">
-                Cadastre-se
-            </a>
+                            </div>
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Senha
+                                </label>
+
+                                <input
+                                    type="password"
+                                    name="senha"
+                                    class="form-control"
+                                    required>
+
+                            </div>
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary w-100">
+
+                                Entrar
+
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                    <div class="card-footer text-center">
+
+                        <p>
+                            Não possui conta?
+                            <a href="/cadastro">
+                                Cadastre-se
+                            </a>
+                        </p>
+
+                        <p>
+                            <a href="/recuperar">
+                                Esqueci minha senha
+                            </a>
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
     </div>
 
-</div>
-
 </body>
-
 </html>

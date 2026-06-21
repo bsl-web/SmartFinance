@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Senha</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container">
+
+    <div class="row justify-content-center mt-5">
+
+        <div class="col-md-5">
+
+            <div class="card shadow">
+
+                <div class="card-header text-center">
+
+                    <h2>Nova Senha</h2>
+
+                </div>
+
+                <div class="card-body">
+
+                    <form method="POST">
+
+                        <div class="mb-3">
+
+                            <label>Código</label>
+
+                            <input
+                                type="text"
+                                name="codigo"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label>Nova Senha</label>
+
+                            <input
+                                type="password"
+                                name="senha"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label>Confirmar Senha</label>
+
+                            <input
+                                type="password"
+                                name="confirmar"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            class="btn btn-success w-100">
+
+                            Alterar Senha
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

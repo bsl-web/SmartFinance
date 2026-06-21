@@ -1,252 +1,170 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0">
-
-<title>Dashboard Financeiro</title>
-
-<link
-rel="stylesheet"
-href="{{ url_for('static', filename='css/style.css') }}">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SmartFinance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
-<body>
+<body class="bg-light">
 
-<div class="topbar">
+    <nav class="navbar navbar-dark bg-primary">
 
-    <h2>💰 Financeiro</h2>
+        <div class="container-fluid">
 
-    <a href="/logout" class="btn-sair">
-        Sair
-    </a>
+            <span class="navbar-brand">
+                SmartFinance
+            </span>
 
-</div>
+            <div class="text-white">
 
-<div class="container">
+                Olá, {{ nome }}
 
-    <h1>Dashboard</h1>
+                <a href="/logout"
+                class="btn btn-danger btn-sm ms-3"
+                onclick="return confirmarLogout()">
+                    Sair
+                </a>
 
-    <div class="cards">
-
-        <div class="card salario">
-
-            <h3>Salário</h3>
-
-            <p>R$ {{ "%.2f"|format(salario) }}</p>
+            </div>
 
         </div>
 
-        <div class="card gastos">
+    </nav>
 
-            <h3>Gastos</h3>
+    <div class="container mt-4">
 
-            <p>R$ {{ "%.2f"|format(total_gastos) }}</p>
+        <div class="row">
 
-        </div>
+            <!-- Salário -->
 
-        <div class="card {% if saldo >= 0 %}saldo{% else %}gastos{% endif %}">
+            <div class="col-md-4 mb-3">
 
-            <h3>Saldo</h3>
+                <div class="card shadow">
 
-            <p>R$ {{ "%.2f"|format(saldo) }}</p>
+                    <div class="card-body">
 
-        </div>
+                        <h5>💰 Salário</h5>
 
-        <div class="card previsao">
+                        <h3>R$ 0,00</h3>
 
-            <h3>Previsão</h3>
+                        <p>Salário líquido cadastrado.</p>
 
-            <p>R$ {{ "%.2f"|format(previsao) }}</p>
+                    </div>
 
-        </div>
+                </div>
 
-        <div class="card reserva">
+            </div>
 
-            <h3>Reserva</h3>
+            <!-- Vale Refeição -->
 
-            <p>R$ {{ "%.2f"|format(valor_guardado) }}</p>
+            <div class="col-md-4 mb-3">
 
-        </div>
+                <div class="card shadow">
 
-    </div>
+                    <div class="card-body">
 
-    <div class="area-formularios">
+                        <h5>🍔 Vale Refeição</h5>
 
-        <div class="box">
+                        <h3>R$ 0,00</h3>
 
-            <h2>Atualizar Salário</h2>
+                        <p>Saldo disponível.</p>
 
-            <form action="/salvar_salario" method="POST">
+                    </div>
 
-                <input
-                type="number"
-                step="0.01"
-                name="salario"
-                required>
+                </div>
 
-                <button>
-                    Salvar
-                </button>
+            </div>
 
-            </form>
+            <!-- Vale Transporte -->
 
-        </div>
+            <div class="col-md-4 mb-3">
 
-        <div class="box">
+                <div class="card shadow">
 
-            <h2>Novo Gasto</h2>
+                    <div class="card-body">
 
-            <form action="/novo_gasto" method="POST">
+                        <h5>🚌 Vale Transporte</h5>
 
-                <input
-                type="date"
-                name="data"
-                required>
+                        <h3>R$ 0,00</h3>
 
-                <select
-                name="categoria">
+                        <p>Saldo disponível.</p>
 
-                    <option>Cartao</option>
-                    <option>Pix</option>
-                    <option>Dinheiro</option>
+                    </div>
 
-                </select>
+                </div>
 
-                <input
-                type="number"
-                step="0.01"
-                name="valor"
-                placeholder="Valor"
-                required>
-
-                <button>
-                    Adicionar
-                </button>
-
-            </form>
+            </div>
 
         </div>
 
-        <div class="box">
+        <div class="row mt-4">
 
-            <h2>Meta de Reserva</h2>
+            <div class="col-md-6">
 
-            <form action="/salvar_meta" method="POST">
+                <div class="card shadow">
 
-                <input
-                type="number"
-                step="0.01"
-                name="meta"
-                placeholder="Meta"
-                required>
+                    <div class="card-header">
+                        Metas Financeiras
+                    </div>
 
-                <input
-                type="number"
-                step="0.01"
-                name="guardado"
-                placeholder="Valor Guardado"
-                required>
+                    <div class="card-body">
 
-                <button>
-                    Salvar Meta
-                </button>
+                        Nenhuma meta cadastrada.
 
-            </form>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col-md-6">
+
+                <div class="card shadow">
+
+                    <div class="card-header">
+                        Previsões
+                    </div>
+
+                    <div class="card-body">
+
+                        Nenhuma previsão calculada.
+
+                    </div>
+
+                </div>
+
+            </div>
 
         </div>
 
-    </div>
+        <div class="row mt-4">
 
-    <div class="graficos">
+            <div class="col-md-12">
 
-        <div class="grafico-box">
+                <div class="card shadow">
 
-            <h2>Gastos por Categoria</h2>
+                    <div class="card-header">
+                        Transações Recentes
+                    </div>
 
-            <canvas id="graficoCategorias"></canvas>
+                    <div class="card-body">
 
-        </div>
+                        Nenhuma transação cadastrada.
 
-        <div class="grafico-box">
+                    </div>
 
-            <h2>Evolução Mensal</h2>
+                </div>
 
-            <canvas id="graficoMensal"></canvas>
+            </div>
 
         </div>
 
     </div>
 
-    <div class="historico">
-
-        <h2>Histórico de Gastos</h2>
-
-        <table>
-
-            <thead>
-
-                <tr>
-
-                    <th>Data</th>
-                    <th>Categoria</th>
-                    <th>Valor</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                {% for item in transacoes %}
-
-                <tr>  
-                    <td>{{ item["data"] }}</td>
-                    <td>{{ item["categoria"] }}</td>
-                    <td>R$ {{ "%.2f"|format(item["valor"]) }}</td>
-                </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <div class="links">
-        <a href="/contas_fixas">
-            Contas Fixas
-        </a>
-
-        <a href="/previsao">
-            Ver Previsão
-        </a>
-
-        <a href="/relatorio">
-            Relatório Mensal
-        </a>
-
-        <a href="/metas">
-            Metas Financeiras
-        </a>
-
-    </div>
-
-</div>
-
-<script src="/dados_dashboard.js"></script>
-
-<script src="{{ url_for('static', filename='js/graficos.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/dashboard.js') }}"></script>
 
 </body>
-
 </html>

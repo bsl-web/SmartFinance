@@ -4,268 +4,158 @@ from flask import (
     request,
     redirect,
     session,
-    url_for
+    flash
 )
-
-from io import BytesIO
-
-from reportlab.pdfgen import canvas
-
-from flask import send_file
-
-from flask import Response, render_template
-import json
-import os
-import sqlite3
-
-from datetime import datetime
+import random
+from flask_mail import Mail, Message
 
 from werkzeug.security import (
     generate_password_hash,
     check_password_hash
 )
 
+from banco.banco import (
+    conectar,
+    criar_tabelas
+)
+
+import os
+
 app = Flask(__name__)
 
-BANCO ="financeiro.db"
+app.secret_key = os.getenv(
+    "SECRET_KEY",
+    "smartfinance_dev"
+)
 
-app.secret_key = "7fK9xM2vL4qP8rN1bC6dZ3tW5yH8uJ"
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
 
-PASTA_DADOS = "dados"
+app.config["MAIL_USERNAME"] = os.getenv(
+    "EMAIL_USER"
+)
 
-os.makedirs(PASTA_DADOS, exist_ok=True)
+app.config["MAIL_PASSWORD"] = os.getenv(
+    "EMAIL_PASSWORD"
+)
 
-def criar_banco():
+app.config["MAIL_DEFAULT_SENDER"] = os.getenv(
+    "EMAIL_USER"
+)
 
-    conn = sqlite3.connect(BANCO)
+mail = Mail(app)
 
-    cursor = conn.cursor()
+# Cria as tabelas ao iniciar
+criar_tabelas()
 
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS usuarios (
-    
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nome TEXT NOT NULL,
-            usuario TEXT UNIQUE NOT NULL,
-            senha TEXT NOT NULL
+
+# ==========================
+# HOME
+# ==========================
+
+@app.route("/")
+def home():
+
+    if session.get("usuario_id"):
+        return redirect("/dashboard")
+
+    return render_template("login.html")
+
+
+# ==========================
+# CADASTRO
+# ==========================
+
+@app.route("/cadastro", methods=["GET", "POST"])
+def cadastro():
+
+    if request.method == "POST":
+
+        nome = request.form["nome"]
+
+        usuario = request.form["usuario"]
+
+        email = request.form["email"]
+
+        senha = request.form["senha"]
+
+        confirmar = request.form["confirmar"]
+
+        if senha != confirmar:
+
+            flash("As senhas não coincidem.")
+
+            return redirect("/cadastro")
+
+        conn = conectar()
+
+        cur = conn.cursor()
+
+        cur.execute(
+            """
+            SELECT id
+            FROM usuarios
+            WHERE usuario=%s
+            """,
+            (usuario,)
         )
-    ''')
-    conn.commit()
-    
-    conn.close()
 
-criar_banco()
+        existe = cur.fetchone()
 
-def criar_admin():
-    conn = sqlite3.connect(BANCO)
-    cursor = conn.cursor()
+        if existe:
 
-    cursor.execute(
-        "SELECT id FROM usuarios WHERE usuario=?",
-        ("admin",)
-    )
+            conn.close()
 
-    existe = cursor.fetchone()
+            flash("Usuário já existe.")
 
-    if not existe:
+            return redirect("/cadastro")
 
-        senha_hash = generate_password_hash("123456")
+        senha_hash = generate_password_hash(
+            senha
+        )
 
-        cursor.execute("""
-            INSERT INTO usuarios (nome, usuario, senha)
-            VALUES (?, ?, ?)
-        """, (
-            "Administrador",
-            "admin",
-            senha_hash
-        ))
+        cur.execute(
+            """
+            INSERT INTO usuarios
+            (
+                nome,
+                usuario,
+                email,
+                senha
+            )
+            VALUES
+            (
+                %s,
+                %s,
+                %s,
+                %s
+            )
+            """,
+            (
+                nome,
+                usuario,
+                email,
+                senha_hash
+            )
+        )
 
         conn.commit()
 
-    conn.close()
+        conn.close()
 
-criar_admin()
+        flash("Cadastro realizado!")
 
-
-def arquivo_mes():
-
-    usuario_id = session.get(
-        "usuario_id",
-        "anonimo"
-    )
-
-    nome_mes = datetime.now().strftime("%Y-%m")
-
-    pasta_usuario = os.path.join(
-        PASTA_DADOS,
-        str(usuario_id)
-    )
-
-    os.makedirs(
-        pasta_usuario,
-        exist_ok=True
-    )
-
-    return os.path.join(
-        pasta_usuario,
-        f"{nome_mes}.json"
-    )
-
-
-def criar_json():
-
-
-    arquivo = arquivo_mes()
-
-    if not os.path.exists(arquivo):
-
-        dados = {
-
-            "salario": 0,
-
-            "meta_reserva": 0,
-
-            "valor_guardado": 0,
-
-            "contas_fixas": [],
-
-            "transacoes": []
-
-        }
-
-        with open(
-            arquivo,
-            "w",
-            encoding="utf-8"
-        ) as f:
-
-            json.dump(
-                dados,
-                f,
-                indent=4,
-                ensure_ascii=False
-            )
-
-
-def carregar_dados():
-
-    criar_json()
-
-    with open(
-        arquivo_mes(),
-        "r",
-        encoding="utf-8"
-    ) as f:
-
-        return json.load(f)
-
-
-def salvar_dados(dados):
-
-    with open(
-        arquivo_mes(),
-        "w",
-        encoding="utf-8"
-    ) as f:
-
-        json.dump(
-            dados,
-            f,
-            indent=4,
-            ensure_ascii=False
-        )
-
-
-def calcular_previsao():
-
-    usuario_id = session.get(
-        "usuario_id"
-    )
-
-    pasta_usuario = os.path.join(
-        PASTA_DADOS,
-        str(usuario_id)
-    )
-
-    gastos = []
-
-    if not os.path.exists(
-        pasta_usuario
-    ):
-        return 0
-
-    for arquivo in os.listdir(
-        pasta_usuario
-    ):
-
-        if arquivo.endswith(".json"):
-
-            caminho = os.path.join(
-                pasta_usuario,
-                arquivo
-            )
-
-            with open(
-                caminho,
-                "r",
-                encoding="utf-8"
-            ) as f:
-
-                dados = json.load(f)
-
-                total = sum(
-                    t["valor"]
-                    for t in dados["transacoes"]
-                )
-
-                gastos.append(total)
-
-    if len(gastos) == 0:
-        return 0
-
-    return round(
-        sum(gastos) / len(gastos),
-        2
-    )
-
-
-@app.route("/dados_dashboard.js")
-def dados_dashboard_js():
-
-    dados = carregar_dados()
-
-    categorias = {}
-    
-    for item in dados["transacoes"]:
-        categoria = item["categoria"]
-
-        categorias[categoria] = (
-            categorias.get(categoria, 0)
-            + item["valor"]
-        )
-
-    meses = []
-    gastos_mensais = []
-
-    return Response(
-
-        render_template(
-            "dados_dashboard.js",
-            categorias=categorias,
-            meses=meses,
-            gastos_mensais=gastos_mensais
-        ),
-
-        mimetype="application/javascript"
-    )
-
-@app.route("/")
-def login():
+        return redirect("/")
 
     return render_template(
-        "login.html"
+        "cadastro.html"
     )
 
+
+# ==========================
+# LOGIN
+# ==========================
 
 @app.route("/entrar", methods=["POST"])
 def entrar():
@@ -274,48 +164,168 @@ def entrar():
 
     senha = request.form["senha"]
 
-    conn = sqlite3.connect(BANCO)
+    conn = conectar()
 
-    cursor = conn.cursor()
+    cur = conn.cursor()
 
-    cursor.execute("""
-                SELECT id, nome, senhaFROM usuarios
-                WHERE usuario = ?
-                """,
-                (usuario,))
+    cur.execute(
+        """
+        SELECT
+            id,
+            nome,
+            senha
+        FROM usuarios
+        WHERE usuario=%s
+        """,
+        (usuario,)
+    )
 
-    usuario_encontrado = cursor.fetchone()
-
-    if usuario_encontrado:
-        senha_banco = usuario_encontrado[2]
-
-    if check_password_hash(
-        senha_banco,
-        senha
-    ):
-
-        session["logado"] = True
-
-        session["usuario_id"] = usuario_encontrado[0]
-
-        session["nome"] = usuario_encontrado[1]
-
-        return redirect("/dashboard")
+    usuario_banco = cur.fetchone()
 
     conn.close()
 
-    if usuario_encontrado:
+    if usuario_banco:
 
-        session["logado"] = True
+        if check_password_hash(
+            usuario_banco[2],
+            senha
+        ):
 
-        session["usuario_id"] = usuario_encontrado[0]
+            session["usuario_id"] = usuario_banco[0]
 
-        session["nome"] = usuario_encontrado[1]
+            session["nome"] = usuario_banco[1]
 
-        return redirect("/dashboard")
+            return redirect("/dashboard")
+
+    flash("Usuário ou senha inválidos.")
 
     return redirect("/")
 
+# ==========================
+# RECUPERAR SENHA
+# ==========================
+
+@app.route("/recuperar", methods=["GET", "POST"])
+def recuperar():
+
+    if request.method == "POST":
+
+        usuario = request.form["usuario"]
+
+        conn = conectar()
+
+        cur = conn.cursor()
+
+        # Procura o usuário no banco
+        cur.execute("""
+            SELECT id, email
+            FROM usuarios
+            WHERE usuario = %s
+        """, (usuario,))
+
+        usuario_banco = cur.fetchone()
+
+        if usuario_banco:
+
+            codigo = str(random.randint(100000, 999999))
+
+            session["codigo"] = codigo
+
+            session["usuario_recuperacao"] = usuario_banco[0]
+
+            print("Código:", codigo)
+
+            conn.close()
+
+            return redirect("/nova_senha")
+
+        conn.close()
+
+    return render_template("recuperar_senha.html")
+
+# ==========================
+# NOVA SENHA
+# ==========================
+
+@app.route("/nova_senha", methods=["GET", "POST"])
+def nova_senha():
+
+    if request.method == "POST":
+
+        codigo = request.form["codigo"]
+
+        senha = request.form["senha"]
+
+        confirmar = request.form["confirmar"]
+
+        if senha != confirmar:
+
+            return redirect(
+                "/nova_senha"
+            )
+
+        if codigo == session.get("codigo"):
+
+            senha_hash = generate_password_hash(
+                senha
+            )
+
+            conn = conectar()
+
+            cur = conn.cursor()
+
+            cur.execute("""
+            UPDATE usuarios
+            SET senha=%s
+            WHERE id=%s
+            """,
+            (
+                senha_hash,
+                session["usuario_recuperacao"]
+            ))
+
+            conn.commit()
+
+            conn.close()
+
+            session.pop(
+                "codigo",
+                None
+            )
+
+            session.pop(
+                "usuario_recuperacao",
+                None
+            )
+
+            return redirect("/")
+
+    return render_template(
+        "nova_senha.html"
+    )
+
+# ==========================
+# DASHBOARD
+# ==========================
+
+@app.route("/dashboard")
+def dashboard():
+
+    if not session.get(
+        "usuario_id"
+    ):
+
+        return redirect("/")
+
+    return render_template(
+        "dashboard.html",
+        nome=session["nome"]
+    )
+
+
+# ==========================
+# LOGOUT
+# ==========================
 
 @app.route("/logout")
 def logout():
@@ -325,422 +335,9 @@ def logout():
     return redirect("/")
 
 
-
-
-@app.route("/cadastro")
-def cadastro():
-    return render_template("cadastro.html")
-
-@app.route("/cadastrar", methods=["POST"])
-def cadastrar():
-    nome=request.form["nome"]
-    usuario=request.form["usuario"]
-    senha=request.form["senha"]
-    senha_hash = generate_password_hash(
-    senha
-    )
-    conn=sqlite3.connect(BANCO)
-    cur=conn.cursor()
-    try:
-        cur.execute(
-            "INSERT INTO usuarios (nome,usuario,senha) VALUES (?,?,?)",
-            (nome,usuario,senha_hash)
-            )
-        conn.commit()
-    except Exception as e:
-        print(e)
-    conn.close()
-    return redirect("/")
-
-@app.route("/dashboard")
-def dashboard():
-
-    if not session.get("logado"):
-
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    total_gastos = sum(
-        item["valor"]
-        for item in dados["transacoes"]
-    )
-
-    total_contas_fixas = sum(
-        item["valor"]
-        for item in dados["contas_fixas"]
-    )
-
-    saldo = (
-        dados["salario"]
-        - total_gastos
-        - total_contas_fixas
-    )
-
-    previsao = calcular_previsao()
-
-    return render_template(
-
-        "dashboard.html",
-
-        salario=dados["salario"],
-
-        total_gastos=round(
-            total_gastos,
-            2
-        ),
-
-        total_contas_fixas=round(
-            total_contas_fixas,
-            2
-        ),
-
-        saldo=round(
-            saldo,
-            2
-        ),
-
-        previsao=previsao,
-
-        valor_guardado=dados[
-            "valor_guardado"
-        ],
-
-        transacoes=dados[
-            "transacoes"
-        ]
-    )
-     
-    categorias = {}
-
-    for item in dados["transacoes"]:
-        categoria = item["categoria"]
-        
-        categorias[categoria] = (
-        categorias.get(categoria, 0)
-        + item["valor"]
-    )
-        meses = []
-        gastos_mensais = []
-        for arquivo in sorted(os.listdir(PASTA_DADOS)):
-            if arquivo.endswith(".json"):
-                caminho = os.path.join(
-                    PASTA_DADOS,
-                    arquivo
-                    )
-                with open(
-                    caminho,
-                    "r",
-                    encoding="utf-8"
-                    ) as f:
-                    
-                    d = json.load(f)
-                    
-                    total = sum(
-                        t["valor"]
-                        for t in d["transacoes"]
-                        )
-                    meses.append(
-                        arquivo.replace(".json", "")
-                        )
-                    gastos_mensais.append(total)
-
-
-@app.route("/contas_fixas")
-def contas_fixas():
-
-    if not session.get("logado"):
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    return render_template(
-        "contas_fixas.html",
-        contas_fixas=dados["contas_fixas"]
-    )
-
-
-@app.route(
-    "/salvar_salario",
-    methods=["POST"]
-)
-def salvar_salario():
-
-    dados = carregar_dados()
-
-    dados["salario"] = float(
-        request.form["salario"]
-    )
-
-    salvar_dados(dados)
-
-    return redirect(
-        "/dashboard"
-    )
-
-
-@app.route(
-    "/novo_gasto",
-    methods=["POST"]
-)
-def novo_gasto():
-
-    dados = carregar_dados()
-
-    dados["transacoes"].append({
-
-        "data":
-        request.form["data"],
-
-        "categoria":
-        request.form["categoria"],
-
-        "valor":
-        float(
-            request.form["valor"]
-        )
-
-    })
-
-    salvar_dados(dados)
-
-    return redirect(
-        "/dashboard"
-    )
-
-
-@app.route("/conta_fixa", methods=["POST"])
-def conta_fixa():
-
-    if not session.get("logado"):
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    nome = request.form["nome"].strip()
-
-    valor = float(
-        request.form["valor"]
-    )
-
-    dados["contas_fixas"].append({
-
-        "id": len(
-            dados["contas_fixas"]
-        ) + 1,
-
-        "nome": nome,
-
-        "valor": valor
-
-    })
-
-    salvar_dados(dados)
-
-    return redirect(
-        "/contas_fixas"
-    )
-
-@app.route(
-    "/salvar_meta",
-    methods=["POST"]
-)
-def salvar_meta():
-
-    dados = carregar_dados()
-
-    dados["meta_reserva"] = float(
-        request.form["meta"]
-    )
-
-    dados["valor_guardado"] = float(
-        request.form["guardado"]
-    )
-
-    salvar_dados(dados)
-
-    return redirect(
-        "/dashboard"
-    )
-
-
-@app.route("/previsao")
-def previsao():
-
-    if not session.get("logado"):
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    previsao_valor = calcular_previsao()
-
-    sobra_prevista = (
-        dados["salario"]
-        - previsao_valor
-    )
-
-    return render_template(
-
-        "previsao.html",
-
-        previsao=previsao_valor,
-
-        salario=dados["salario"],
-
-        sobra_prevista=round(
-            sobra_prevista,
-            2
-        )
-
-    )
-
-
-@app.route("/relatorio")
-def relatorio():
-
-    if not session.get("logado"):
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    gastos = sum(
-        item["valor"]
-        for item in dados["transacoes"]
-    )
-
-    contas = sum(
-        item["valor"]
-        for item in dados["contas_fixas"]
-    )
-
-    saldo = (
-        dados["salario"]
-        - gastos
-        - contas
-    )
-
-    return render_template(
-
-        "relatorio.html",
-
-        salario=dados["salario"],
-
-        gastos=round(gastos, 2),
-
-        contas=round(contas, 2),
-
-        saldo=round(saldo, 2)
-
-    )
-
-@app.route("/gerar_pdf")
-def gerar_pdf():
-
-    if not session.get("logado"):
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    gastos = sum(
-        item["valor"]
-        for item in dados["transacoes"]
-    )
-
-    contas = sum(
-        item["valor"]
-        for item in dados["contas_fixas"]
-    )
-
-    saldo = (
-        dados["salario"]
-        - gastos
-        - contas
-    )
-
-    buffer = BytesIO()
-
-    pdf = canvas.Canvas(buffer)
-
-    pdf.drawString(
-        100,
-        800,
-        "Relatório Financeiro"
-    )
-
-    pdf.drawString(
-        100,
-        760,
-        f"Salário: R$ {dados['salario']:.2f}"
-    )
-
-    pdf.drawString(
-        100,
-        740,
-        f"Gastos: R$ {gastos:.2f}"
-    )
-
-    pdf.drawString(
-        100,
-        720,
-        f"Contas Fixas: R$ {contas:.2f}"
-    )
-
-    pdf.drawString(
-        100,
-        700,
-        f"Saldo: R$ {saldo:.2f}"
-    )
-
-    pdf.save()
-
-    buffer.seek(0)
-
-    return send_file(
-        buffer,
-        as_attachment=True,
-        download_name="relatorio_financeiro.pdf",
-        mimetype="application/pdf"
-    )
-
-@app.route("/metas")
-def metas():
-
-    if not session.get("logado"):
-        return redirect("/")
-
-    dados = carregar_dados()
-
-    meta = dados["meta_reserva"]
-
-    guardado = dados["valor_guardado"]
-
-    percentual = 0
-
-    if meta > 0:
-
-        percentual = round(
-            (guardado / meta) * 100,
-            1
-        )
-
-    falta = round(
-        meta - guardado,
-        2
-    )
-
-    return render_template(
-
-        "metas.html",
-
-        meta=meta,
-
-        guardado=guardado,
-
-        percentual=percentual,
-
-        falta=falta
-
-    )
+# ==========================
+# EXECUTAR
+# ==========================
 
 if __name__ == "__main__":
 
